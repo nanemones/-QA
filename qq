@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消化系統Q&A</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka One', sans-serif;
+        }
+        
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
+        /* 讓卡片在點擊後能真正旋轉 */
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        
+        /* 自訂滾動條，讓卡片內容過多時也能優雅滾動 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-indigo-50 min-h-screen text-slate-800 pb-16">
+
+    <header class="bg-gradient-to-r from-teal-400 via-cyan-500 to-indigo-500 text-white py-12 px-4 shadow-lg text-center relative overflow-hidden">
+        <!-- 背景裝飾圓形 -->
+        <div class="absolute w-64 h-64 bg-white opacity-10 rounded-full -top-12 -left-12 pointer-events-none"></div>
+        <div class="absolute w-80 h-80 bg-white opacity-10 rounded-full -bottom-20 -right-20 pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto relative z-10">
+            <h1 class="text-3xl md:text-5xl font-black tracking-wider mb-4 drop-shadow-md">
+                消化系統Q&A
+            </h1>
+            <p class="text-base md:text-lg text-indigo-50 max-w-2xl mx-auto leading-relaxed">
+                點擊卡片，一起翻開人體消化系統的精彩真相！
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8">
+        
+        <!-- 操作按鈕區 -->
+        <section class="bg-white rounded-2xl p-4 shadow-sm mb-8 flex justify-center gap-4 border border-indigo-100">
+            <button onclick="flipAll(true)" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 text-sm flex items-center justify-center gap-2">
+                📖 全部翻開
+            </button>
+            <button onclick="flipAll(false)" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl shadow-sm border border-slate-300 transition-all transform active:scale-95 text-sm flex items-center justify-center gap-2">
+                🔄 重置卡片
+            </button>
+        </section>
+
+        <!-- 分類標籤區 -->
+        <section class="mb-8 overflow-x-auto pb-2 scrollbar-none">
+            <div class="flex space-x-2 md:justify-center min-w-max px-1" id="filter-tabs">
+                <!-- 由 JS 動態產生標籤 -->
+            </div>
+        </section>
+
+        <!-- 卡片網格區 -->
+        <section id="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 由 JS 動態繪製卡片 -->
+        </section>
+
+    </main>
+
+    <script>
+        const cardsData = [
+            {
+                id: 1,
+                theme: "journey",
+                themeName: "食物與消化的奇幻旅程",
+                icon: "🥗",
+                colorClass: "from-orange-400 to-amber-500",
+                bgClass: "bg-gradient-to-br from-orange-50 to-amber-50/30",
+                borderColor: "border-orange-200",
+                textColor: "text-orange-800",
+                badgeColor: "bg-orange-100 text-orange-700",
+                question: "為什麼大家都說「健康的食物不會被排出」，但我卻看過原型食物被排出呢？",
+                answer: "這句話其實是指「健康的食物營養會被身體吸收到體內」。有些非常健康的食物（如蔬菜）含有豐富的<strong class='text-orange-600 font-bold'>「膳食纖維」</strong>，例如金針菇、玉米、番茄皮。這些纖維就像大自然的<b>防護衣</b>，我們的胃酸與腸子剪不碎它，所以它會原封不動地跟著大便排出來。這很正常，代表身體正在把多餘的纖維當成掃把，幫腸子做清潔喔！"
+            },
+            {
+                id: 2,
+                theme: "journey",
+                themeName: "食物與消化的奇幻旅程",
+                icon: "⏰",
+                colorClass: "from-orange-400 to-amber-500",
+                bgClass: "bg-gradient-to-br from-orange-50 to-amber-50/30",
+                borderColor: "border-orange-200",
+                textColor: "text-orange-800",
+                badgeColor: "bg-orange-100 text-orange-700",
+                question: "食物進到胃要消化幾小時才會變成大便？",
+                answer: "食物在胃裡大約會待 <strong class='text-orange-600 font-bold'>2 到 5 個小時</strong> 被磨成像濃湯一樣的食糜。接著進入小腸和大腸，這段吸收營養和水分的旅程非常漫長，大約需要 <strong class='text-orange-600 font-bold'>1 到 2 天</strong> 才會變成大便。所以你現在拉出來的大便，通常是昨天或前天吃進去的食物喔！"
+            },
+            {
+                id: 3,
+                theme: "journey",
+                themeName: "食物與消化的奇幻旅程",
+                icon: "🚀",
+                colorClass: "from-orange-400 to-amber-500",
+                bgClass: "bg-gradient-to-br from-orange-50 to-amber-50/30",
+                borderColor: "border-orange-200",
+                textColor: "text-orange-800",
+                badgeColor: "bg-orange-100 text-orange-700",
+                question: "吸收到營養怎麼傳給身體？",
+                answer: "當食物在小腸被分解成超級小的營養微粒後，小腸壁上有很多微小的血管，就像無數個<strong class='text-orange-600 font-bold'>「小抽水機」</strong>。這些營養會透過血管進入血液，隨著血液像高鐵一樣坐到全身各個器官和肌肉，把能量送給需要長高、跑步的身體各個角落！"
+            },
+            {
+                id: 4,
+                theme: "journey",
+                themeName: "食物與消化的奇幻旅程",
+                icon: "🥩",
+                colorClass: "from-orange-400 to-amber-500",
+                bgClass: "bg-gradient-to-br from-orange-50 to-amber-50/30",
+                borderColor: "border-orange-200",
+                textColor: "text-orange-800",
+                badgeColor: "bg-orange-100 text-orange-700",
+                question: "什麼樣的食物不容易消化？",
+                answer: "<strong class='text-orange-600 font-bold'>油脂太多的食物</strong>（例如炸雞、肥肉）、<strong class='text-orange-600 font-bold'>含有大量堅固纖維的食物</strong>（例如竹筍、糯米飯或麻糬），以及加工比較複雜的零食。這些食物需要胃與腸子花更多力氣、更長的時間去磨碎與分解，所以吃太多身體會覺得比較沉重負擔。"
+            },
+            {
+                id: 5,
+                theme: "stomach",
+                themeName: "肚子裡的超級工廠：胃與胃液",
+                icon: "🎈",
+                colorClass: "from-purple-400 to-indigo-500",
+                bgClass: "bg-gradient-to-br from-purple-50 to-indigo-50/30",
+                borderColor: "border-purple-200",
+                textColor: "text-purple-800",
+                badgeColor: "bg-purple-100 text-purple-700",
+                question: "胃有大小限制嗎？",
+                answer: "胃是一個非常有彈性的<strong class='text-purple-600 font-bold'>「神奇氣球」</strong>。空腹的時候，它大約只有一個拳頭大；當我們開始吃東西，它就會慢慢撐大，最多可以裝下比原本<strong class='text-purple-600 font-bold'>大好多倍</strong>的食物。不過它還是有極限的，如果吃得太飽，胃會撐得很難受，甚至會想吐。"
+            },
+            {
+                id: 6,
+                theme: "stomach",
+                themeName: "肚子裡的超級工廠：胃與胃液",
+                icon: "🛡️",
+                colorClass: "from-purple-400 to-indigo-500",
+                bgClass: "bg-gradient-to-br from-purple-50 to-indigo-50/30",
+                borderColor: "border-purple-200",
+                textColor: "text-purple-800",
+                badgeColor: "bg-purple-100 text-purple-700",
+                question: "為什麼帶有胃液的食糜進到小腸不會溶解小腸？",
+                answer: "胃酸雖然很強，但小腸非常聰明！當酸酸的食糜準備進入小腸時，胰臟會立刻分泌<strong class='text-purple-600 font-bold'>「鹼性」的汁液</strong>（就像中和小蘇打水一樣的效果）倒進小腸裡，瞬間把胃酸中和掉。加上小腸壁也會分泌一層厚厚的黏液保護自己，所以小腸不會受傷。"
+            },
+            {
+                id: 7,
+                theme: "stomach",
+                themeName: "肚子裡的超級工廠：胃與胃液",
+                icon: "🏭",
+                colorClass: "from-purple-400 to-indigo-500",
+                bgClass: "bg-gradient-to-br from-purple-50 to-indigo-50/30",
+                borderColor: "border-purple-200",
+                textColor: "text-purple-800",
+                badgeColor: "bg-purple-100 text-purple-700",
+                question: "食物會被胃酸分解，那胃酸是如何形成的？",
+                answer: "胃壁上有成千上萬個微小的<strong class='text-purple-600 font-bold'>「工廠細胞」</strong>。當大腦接收到「要吃東西了」的訊號，或是食物掉進胃裡時，這些細胞就會開始合作，把血液中的成分轉換成酸性很強的鹽酸，這就是胃液裡的胃酸。它是我們身體天然的殺菌兼融化工具！"
+            },
+            {
+                id: 8,
+                theme: "stomach",
+                themeName: "肚子裡的超級工廠：胃與胃液",
+                icon: "🧪",
+                colorClass: "from-purple-400 to-indigo-500",
+                bgClass: "bg-gradient-to-br from-purple-50 to-indigo-50/30",
+                borderColor: "border-purple-200",
+                textColor: "text-purple-800",
+                badgeColor: "bg-purple-100 text-purple-700",
+                question: "胃液有多少？胃液為什麼會讓食物變小？",
+                answer: "一個小學生一天的胃液分泌量大約有 <strong class='text-purple-600 font-bold'>1 到 2 公升</strong>，可以裝滿大瓶的寶特瓶！胃液裡除了胃酸，還有專門切碎蛋白質的<strong class='text-purple-600 font-bold'>「酵素」</strong>，它們就像無數把隱形的小剪刀，把大塊的肉或豆腐剪成肉眼看不見的營養小碎片。"
+            },
+            {
+                id: 9,
+                theme: "poop",
+                themeName: "便便的祕密",
+                icon: "💩",
+                colorClass: "from-amber-500 to-yellow-600",
+                bgClass: "bg-gradient-to-br from-amber-50 to-yellow-50/30",
+                borderColor: "border-amber-200",
+                textColor: "text-amber-900",
+                badgeColor: "bg-amber-100 text-amber-800",
+                question: "怎樣的大便顏色才是健康的？為什麼便便是棕色的？",
+                answer: "健康的便便通常是<strong class='text-amber-700 font-bold'>「黃褐色」或「棕色」</strong>的，形狀像香蕉。便便會是棕色，是因為肝臟在工作時會產生一種叫「膽汁」的綠黃色液體。膽汁經過腸道和細菌混合、發生化學反應之後，就會變成棕色，像油漆一樣把大便染成大地的顏色。"
+            },
+            {
+                id: 10,
+                theme: "poop",
+                themeName: "便便的祕密",
+                icon: "👃",
+                colorClass: "from-amber-500 to-yellow-600",
+                bgClass: "bg-gradient-to-br from-amber-50 to-yellow-50/30",
+                borderColor: "border-amber-200",
+                textColor: "text-amber-900",
+                badgeColor: "bg-amber-100 text-amber-800",
+                question: "為什麼有些大便很臭，有些還好？",
+                answer: "這跟吃進去的食物很有關係。如果吃了很多肉、蛋，這些蛋白質在腸胃裡被細菌分解時，會產生比較多<strong class='text-amber-700 font-bold'>有臭味的氣體</strong>，大便就會很臭。如果吃比較多蔬菜、水果並多喝水，腸道裡的優良益生菌比較多，大便的味道就會比較淡，甚至不怎麼臭喔！"
+            },
+            {
+                id: 11,
+                theme: "warning",
+                themeName: "身體的警訊與應變",
+                icon: "🚨",
+                colorClass: "from-teal-400 to-emerald-500",
+                bgClass: "bg-gradient-to-br from-teal-50 to-emerald-50/30",
+                borderColor: "border-teal-200",
+                textColor: "text-teal-800",
+                badgeColor: "bg-teal-100 text-teal-700",
+                question: "為什麼會肚子痛？",
+                answer: "肚子痛是身體的<strong class='text-teal-600 font-bold'>「警報系統」</strong>。原因有很多：可能是肚子著涼讓腸子抽筋、可能是便便卡在大腸裡出不來（便祕）、可能是吃太飽把胃撐得太大，或者是吃進了壞細菌讓腸胃發炎生病了。"
+            },
+            {
+                id: 12,
+                theme: "warning",
+                themeName: "身體的警訊與應變",
+                icon: "🥣",
+                colorClass: "from-teal-400 to-emerald-500",
+                bgClass: "bg-gradient-to-br from-teal-50 to-emerald-50/30",
+                borderColor: "border-teal-200",
+                textColor: "text-teal-800",
+                badgeColor: "bg-teal-100 text-teal-700",
+                question: "肚子痛可以吃什麼？",
+                answer: "肚子痛時要讓胃腸好好休息。如果想吃東西，可以吃些清淡、好消化的食物，如<strong class='text-teal-600 font-bold'>白稀飯、白吐司、或者蘋果泥</strong>。千萬不要吃油炸、甜食、冰冷或辣的食物，也先不要喝牛奶，才不會讓辛苦工作的肚子雪上加霜。"
+            },
+            {
+                id: 13,
+                theme: "warning",
+                themeName: "身體的警訊與應變",
+                icon: "🌊",
+                colorClass: "from-teal-400 to-emerald-500",
+                bgClass: "bg-gradient-to-br from-teal-50 to-emerald-50/30",
+                borderColor: "border-teal-200",
+                textColor: "text-teal-800",
+                badgeColor: "bg-teal-100 text-teal-700",
+                question: "為什麼會拉肚子？",
+                answer: "當腸胃發現吃進去的食物有壞細菌或病毒時，腸子就會啟動<strong class='text-teal-600 font-bold'>「緊急排毒模式」</strong>。它會快速蠕動，想用大量的水把壞東西趕快沖洗排出去。這時候大腸根本來不及吸收水分，排出來的便便就會變成水水的。"
+            },
+            {
+                id: 14,
+                theme: "warning",
+                themeName: "身體的警訊與應變",
+                icon: "🛌",
+                colorClass: "from-teal-400 to-emerald-500",
+                bgClass: "bg-gradient-to-br from-teal-50 to-emerald-50/30",
+                borderColor: "border-teal-200",
+                textColor: "text-teal-800",
+                badgeColor: "bg-teal-100 text-teal-700",
+                question: "剛吃飽躺下會怎麼樣？",
+                answer: "剛吃飽時胃裡裝滿了食物和強酸胃液。如果立刻躺平，胃酸很容易因為地心引力的關係，順著食道<strong class='text-teal-600 font-bold'>往上逆流</strong>。這會讓喉嚨和胸口有熱熱、酸酸、很不舒服的感覺（俗稱胃食道逆流），久了胃和食道會生病受傷哦！"
+            },
+            {
+                id: 15,
+                theme: "warning",
+                themeName: "身體的警訊與應變",
+                icon: "💨",
+                colorClass: "from-teal-400 to-emerald-500",
+                bgClass: "bg-gradient-to-br from-teal-50 to-emerald-50/30",
+                borderColor: "border-teal-200",
+                textColor: "text-teal-800",
+                badgeColor: "bg-teal-100 text-teal-700",
+                question: "如果食物不小心跑到氣管會怎樣？",
+                answer: "喉嚨裡有兩條路：一條去胃（食道），一條去肺（氣管）。平常吃東西時，氣管上方有一片叫<strong class='text-teal-600 font-bold'>「會厭軟骨」</strong>的小蓋子會自動蓋住氣管。如果邊吃邊大笑，蓋子沒蓋好讓食物掉進氣管，身體就會劇烈咳嗽，拼命把異物咳出來，避免沒辦法呼吸！"
+            }
+        ];
+
+        // 定義主題清單
+        const themes = {
+            all: { name: "全部 🌟", color: "bg-indigo-600 text-white" },
+            journey: { name: "食物旅程 🥗", color: "bg-orange-500 text-white" },
+            stomach: { name: "胃與胃液 🧪", color: "bg-purple-600 text-white" },
+            poop: { name: "便便秘密 💩", color: "bg-amber-600 text-white" },
+            warning: { name: "身體警訊 ⚠️", color: "bg-teal-600 text-white" }
+        };
+
+        let currentFilter = "all";
+
+        function initApp() {
+            renderTabs();
+            renderCards();
+        }
+
+        // 渲染篩選標籤
+        function renderTabs() {
+            const tabsContainer = document.getElementById('filter-tabs');
+            tabsContainer.innerHTML = '';
+            
+            Object.keys(themes).forEach(key => {
+                const isSelected = currentFilter === key;
+                const activeClasses = themes[key].color + " shadow-md scale-105 font-bold";
+                const inactiveClasses = "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-medium";
+                
+                const tab = document.createElement('button');
+                tab.className = `px-5 py-2.5 rounded-full text-sm md:text-base transition-all duration-300 transform active:scale-95 whitespace-nowrap ${isSelected ? activeClasses : inactiveClasses}`;
+                tab.innerText = themes[key].name;
+                tab.onclick = () => {
+                    currentFilter = key;
+                    renderTabs();
+                    renderCards();
+                };
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('card-grid');
+            grid.innerHTML = '';
+
+            const filteredData = currentFilter === 'all' 
+                ? cardsData 
+                : cardsData.filter(card => card.theme === currentFilter);
+
+            filteredData.forEach(card => {
+                // 卡片容器
+                const cardEl = document.createElement('div');
+                cardEl.className = "perspective-1000 h-80 w-full cursor-pointer group";
+                cardEl.setAttribute('id', `card-container-${card.id}`);
+                
+                // 3D 旋轉內層
+                const innerEl = document.createElement('div');
+                innerEl.className = "card-inner w-full h-full transition-transform duration-500 transform-style-3d relative rounded-2xl shadow-md group-hover:shadow-xl";
+                innerEl.setAttribute('id', `card-inner-${card.id}`);
+                
+                // 點擊事件：翻轉卡片
+                cardEl.onclick = () => {
+                    toggleCard(card.id);
+                };
+
+                // 卡片正面 (問題)
+                const frontEl = document.createElement('div');
+                frontEl.className = `card-front absolute inset-0 backface-hidden rounded-2xl border-2 ${card.borderColor} ${card.bgClass} p-6 flex flex-col justify-between transition-all duration-300`;
+                frontEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="px-3 py-1 text-xs rounded-full font-bold ${card.badgeColor}">
+                            ${card.themeName}
+                        </span>
+                        <span class="text-3xl">${card.icon}</span>
+                    </div>
+                    <div class="my-auto">
+                        <h3 class="text-lg md:text-xl font-extrabold ${card.textColor} leading-snug">
+                            ${card.question}
+                        </h3>
+                    </div>
+                    <div class="text-center text-xs font-semibold text-slate-400 group-hover:text-indigo-500 transition-colors flex items-center justify-center gap-1">
+                        <span>💡 點擊卡片翻開答案</span>
+                    </div>
+                `;
+
+                // 卡片背面 (回答)
+                const backEl = document.createElement('div');
+                backEl.className = `card-back absolute inset-0 backface-hidden rounded-2xl bg-white border-2 border-slate-200 p-6 flex flex-col justify-between rotate-y-180`;
+                backEl.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="text-xs font-bold text-slate-400">解答之書 📖</span>
+                        <span class="text-xl">${card.icon}</span>
+                    </div>
+                    <div class="my-auto overflow-y-auto max-h-48 pr-1 custom-scrollbar">
+                        <p class="text-sm md:text-base text-slate-600 leading-relaxed text-left">
+                            ${card.answer}
+                        </p>
+                    </div>
+                    <div class="text-center text-xs font-semibold text-slate-300 flex items-center justify-center gap-1 pt-2 border-t border-slate-100">
+                        <span>🔄 點擊卡片返回問題</span>
+                    </div>
+                `;
+
+                innerEl.appendChild(frontEl);
+                innerEl.appendChild(backEl);
+                cardEl.appendChild(innerEl);
+                grid.appendChild(cardEl);
+            });
+        }
+
+        function toggleCard(id) {
+            const inner = document.getElementById(`card-inner-${id}`);
+            if (!inner) return;
+
+            // 判斷當前是否已翻面
+            const isFlipped = inner.classList.contains('flipped');
+            if (isFlipped) {
+                inner.classList.remove('flipped');
+            } else {
+                inner.classList.add('flipped');
+            }
+        }
+
+        function flipAll(shouldFlip) {
+            cardsData.forEach(card => {
+                const inner = document.getElementById(`card-inner-${card.id}`);
+                if (inner) {
+                    if (shouldFlip) {
+                        inner.classList.add('flipped');
+                    } else {
+                        inner.classList.remove('flipped');
+                    }
+                }
+            });
+        }
+
+        // 網頁載入完成時初始化
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
