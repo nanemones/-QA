@@ -25,12 +25,12 @@
             transform: rotateY(180deg);
         }
         
-        /* 讓卡片在點擊後能真正旋轉 */
+        /* 讓模態框內的卡片可以翻轉 */
         .flipped {
             transform: rotateY(180deg);
         }
         
-        /* 自訂滾動條，讓卡片內容過多時也能優雅滾動 */
+        /* 自訂滾動條 */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
@@ -47,7 +47,6 @@
 <body class="bg-indigo-50 min-h-screen text-slate-800 pb-16">
 
     <header class="bg-gradient-to-r from-teal-400 via-cyan-500 to-indigo-500 text-white py-12 px-4 shadow-lg text-center relative overflow-hidden">
-        <!-- 背景裝飾圓形 -->
         <div class="absolute w-64 h-64 bg-white opacity-10 rounded-full -top-12 -left-12 pointer-events-none"></div>
         <div class="absolute w-80 h-80 bg-white opacity-10 rounded-full -bottom-20 -right-20 pointer-events-none"></div>
         
@@ -56,7 +55,7 @@
                 消化系統Q&A
             </h1>
             <p class="text-base md:text-lg text-indigo-50 max-w-2xl mx-auto leading-relaxed">
-                點擊卡片，一起翻開人體消化系統的精彩真相！
+                點擊卡片會放大聚焦，再點一下翻看答案！
             </p>
         </div>
     </header>
@@ -86,6 +85,25 @@
         </section>
 
     </main>
+
+    <!-- 全螢幕聚焦浮動視窗 (Modal) -->
+    <div id="modal-backdrop" onclick="closeModal()" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-md items-center justify-center p-4 transition-all duration-300 opacity-0">
+        <div id="modal-container" onclick="event.stopPropagation()" class="w-full max-w-2xl h-[480px] md:h-[520px] perspective-1000 transform scale-95 translate-y-8 transition-all duration-500">
+            <div id="modal-card-inner" onclick="handleModalCardClick(event)" class="card-inner w-full h-full transition-transform duration-500 transform-style-3d relative rounded-3xl shadow-2xl cursor-pointer">
+                
+                <!-- 正面 (問題) -->
+                <div id="modal-card-front" class="absolute inset-0 backface-hidden rounded-3xl border-4 p-8 flex flex-col justify-between bg-white transition-all duration-300">
+                    <!-- 動態填入 -->
+                </div>
+
+                <!-- 反面 (回答) -->
+                <div id="modal-card-back" class="absolute inset-0 backface-hidden rounded-3xl bg-white border-4 border-slate-200 p-8 flex flex-col justify-between rotate-y-180">
+                    <!-- 動態填入 -->
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <script>
         const cardsData = [
@@ -204,7 +222,7 @@
                 textColor: "text-amber-900",
                 badgeColor: "bg-amber-100 text-amber-800",
                 question: "怎樣的大便顏色才是健康的？為什麼便便是棕色的？",
-                answer: "健康的便便通常是<strong class='text-amber-700 font-bold'>「黃褐色」或「棕色」</strong>的，形狀像香蕉。便便會是棕色，是因為肝臟在工作時會產生一種叫「膽汁」的綠黃色液體。膽汁經過腸道和細菌混合、發生化學反應之後，就會變成棕色，像油漆一樣把大便染成大地的顏色。"
+                answer: "健康的便便通常是<strong class='text-amber-700 font-bold'>「黃褐色」或「棕色」</strong>的，形狀像香蕉. 便便會是棕色，是因為肝臟在工作時會產生一種叫「膽汁」的綠黃色液體。膽汁經過腸道和細菌混合、發生化學反應之後，就會變成棕色，像油漆一樣把大便染成大地的顏色。"
             },
             {
                 id: 10,
@@ -269,7 +287,7 @@
                 textColor: "text-teal-800",
                 badgeColor: "bg-teal-100 text-teal-700",
                 question: "剛吃飽躺下會怎麼樣？",
-                answer: "剛吃飽時胃裡裝滿了食物和強酸胃液。如果立刻躺平，胃酸很容易因為地心引力的關係，順著食道<strong class='text-teal-600 font-bold'>往上逆流</strong>。這會讓喉嚨和胸口有熱熱、酸酸、很不舒服的感覺（俗稱胃食道逆流），久了胃和食道會生病受傷哦！"
+                answer: "剛吃飽時胃裡裝滿了食物 and 強酸胃液。如果立刻躺平，胃酸很容易因為地心引力的關係，順著食道<strong class='text-teal-600 font-bold'>往上逆流</strong>。這會讓喉嚨和胸口有熱熱、酸酸、很不舒服的感覺（俗稱胃食道逆流），久了胃和食道會生病受傷哦！"
             },
             {
                 id: 15,
@@ -286,7 +304,6 @@
             }
         ];
 
-        // 定義主題清單
         const themes = {
             all: { name: "全部 🌟", color: "bg-indigo-600 text-white" },
             journey: { name: "食物旅程 🥗", color: "bg-orange-500 text-white" },
@@ -296,13 +313,13 @@
         };
 
         let currentFilter = "all";
+        let activeCardId = null;
 
         function initApp() {
             renderTabs();
             renderCards();
         }
 
-        // 渲染篩選標籤
         function renderTabs() {
             const tabsContainer = document.getElementById('filter-tabs');
             tabsContainer.innerHTML = '';
@@ -333,24 +350,19 @@
                 : cardsData.filter(card => card.theme === currentFilter);
 
             filteredData.forEach(card => {
-                // 卡片容器
                 const cardEl = document.createElement('div');
-                cardEl.className = "perspective-1000 h-80 w-full cursor-pointer group";
+                cardEl.className = "card-container perspective-1000 h-80 w-full cursor-pointer hover:scale-105 transition-all duration-300";
                 cardEl.setAttribute('id', `card-container-${card.id}`);
                 
-                // 3D 旋轉內層
                 const innerEl = document.createElement('div');
-                innerEl.className = "card-inner w-full h-full transition-transform duration-500 transform-style-3d relative rounded-2xl shadow-md group-hover:shadow-xl";
-                innerEl.setAttribute('id', `card-inner-${card.id}`);
+                innerEl.className = "card-inner w-full h-full transition-transform duration-500 transform-style-3d relative rounded-2xl shadow-md bg-white border border-slate-100";
                 
-                // 點擊事件：翻轉卡片
                 cardEl.onclick = () => {
-                    toggleCard(card.id);
+                    openModal(card.id);
                 };
 
-                // 卡片正面 (問題)
                 const frontEl = document.createElement('div');
-                frontEl.className = `card-front absolute inset-0 backface-hidden rounded-2xl border-2 ${card.borderColor} ${card.bgClass} p-6 flex flex-col justify-between transition-all duration-300`;
+                frontEl.className = `card-front absolute inset-0 backface-hidden rounded-2xl border-2 ${card.borderColor} ${card.bgClass} p-6 flex flex-col justify-between`;
                 frontEl.innerHTML = `
                     <div class="flex justify-between items-start">
                         <span class="px-3 py-1 text-xs rounded-full font-bold ${card.badgeColor}">
@@ -363,63 +375,122 @@
                             ${card.question}
                         </h3>
                     </div>
-                    <div class="text-center text-xs font-semibold text-slate-400 group-hover:text-indigo-500 transition-colors flex items-center justify-center gap-1">
-                        <span>💡 點擊卡片翻開答案</span>
-                    </div>
-                `;
-
-                // 卡片背面 (回答)
-                const backEl = document.createElement('div');
-                backEl.className = `card-back absolute inset-0 backface-hidden rounded-2xl bg-white border-2 border-slate-200 p-6 flex flex-col justify-between rotate-y-180`;
-                backEl.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                        <span class="text-xs font-bold text-slate-400">解答之書 📖</span>
-                        <span class="text-xl">${card.icon}</span>
-                    </div>
-                    <div class="my-auto overflow-y-auto max-h-48 pr-1 custom-scrollbar">
-                        <p class="text-sm md:text-base text-slate-600 leading-relaxed text-left">
-                            ${card.answer}
-                        </p>
-                    </div>
-                    <div class="text-center text-xs font-semibold text-slate-300 flex items-center justify-center gap-1 pt-2 border-t border-slate-100">
-                        <span>🔄 點擊卡片返回問題</span>
+                    <div class="text-center text-xs font-semibold text-slate-400 flex items-center justify-center gap-1">
+                        <span>🔍 點擊放大探索</span>
                     </div>
                 `;
 
                 innerEl.appendChild(frontEl);
-                innerEl.appendChild(backEl);
                 cardEl.appendChild(innerEl);
                 grid.appendChild(cardEl);
             });
         }
 
-        function toggleCard(id) {
-            const inner = document.getElementById(`card-inner-${id}`);
-            if (!inner) return;
+        // 核心邏輯：開啟聚焦浮動視窗 (第一下點擊，維持正面)
+        function openModal(id) {
+            const card = cardsData.find(c => c.id === id);
+            if (!card) return;
 
-            // 判斷當前是否已翻面
-            const isFlipped = inner.classList.contains('flipped');
-            if (isFlipped) {
+            activeCardId = id;
+
+            const front = document.getElementById('modal-card-front');
+            const back = document.getElementById('modal-card-back');
+            const inner = document.getElementById('modal-card-inner');
+
+            // 確保每次打開時都先重設為未翻轉狀態
+            inner.classList.remove('flipped');
+
+            // 填入正面 (問題)
+            front.className = `absolute inset-0 backface-hidden rounded-3xl border-4 ${card.borderColor} ${card.bgClass} p-8 flex flex-col justify-between`;
+            front.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="px-4 py-1.5 text-sm rounded-full font-bold ${card.badgeColor}">
+                        ${card.themeName}
+                    </span>
+                    <span class="text-4xl">${card.icon}</span>
+                </div>
+                <div class="my-auto">
+                    <h3 class="text-xl md:text-3xl font-extrabold ${card.textColor} leading-relaxed">
+                        ${card.question}
+                    </h3>
+                </div>
+                <div class="text-center text-sm font-semibold text-slate-400 flex items-center justify-center gap-1.5 animate-pulse">
+                    <span>💡 點擊卡片翻看答案</span>
+                </div>
+            `;
+
+            // 填入反面 (回答)
+            back.className = `absolute inset-0 backface-hidden rounded-3xl bg-white border-4 border-slate-200 p-8 flex flex-col justify-between rotate-y-180`;
+            back.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span class="text-sm font-bold text-slate-400">解答之書 📖</span>
+                    <span class="text-3xl">${card.icon}</span>
+                </div>
+                <div class="my-auto overflow-y-auto max-h-64 pr-2 custom-scrollbar">
+                    <p class="text-base md:text-lg text-slate-600 leading-relaxed text-left">
+                        ${card.answer}
+                    </p>
+                </div>
+                <div class="text-center text-sm font-semibold text-slate-400 flex items-center justify-center gap-1.5 pt-3 border-t border-slate-100">
+                    <span>🔄 點擊卡片收合關閉</span>
+                </div>
+            `;
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const container = document.getElementById('modal-container');
+
+            backdrop.classList.remove('hidden');
+            backdrop.classList.add('flex');
+            
+            // 強制瀏覽器重繪以啟動動畫
+            void backdrop.offsetWidth;
+
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+            container.classList.remove('scale-95', 'translate-y-8');
+            container.classList.add('scale-100', 'translate-y-0');
+        }
+
+        // 關閉聚焦浮動視窗
+        function closeModal() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const container = document.getElementById('modal-container');
+            const inner = document.getElementById('modal-card-inner');
+
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+            container.classList.remove('scale-100', 'translate-y-0');
+            container.classList.add('scale-95', 'translate-y-8');
+
+            setTimeout(() => {
+                backdrop.classList.remove('flex');
+                backdrop.classList.add('hidden');
                 inner.classList.remove('flipped');
+                activeCardId = null;
+            }, 300);
+        }
+
+        // 點擊放大後的卡片 (第二下點擊翻轉，第三下點擊關閉)
+        function handleModalCardClick(event) {
+            event.stopPropagation();
+            const inner = document.getElementById('modal-card-inner');
+            
+            if (inner.classList.contains('flipped')) {
+                closeModal();
             } else {
                 inner.classList.add('flipped');
             }
         }
 
         function flipAll(shouldFlip) {
-            cardsData.forEach(card => {
-                const inner = document.getElementById(`card-inner-${card.id}`);
-                if (inner) {
-                    if (shouldFlip) {
-                        inner.classList.add('flipped');
-                    } else {
-                        inner.classList.remove('flipped');
-                    }
-                }
-            });
+            if (shouldFlip) {
+                // 全部翻開狀態，在網格中直接輔助閱讀
+                alert("此模式將開啟網頁中的全螢幕聚焦效果，請點擊任何一張卡片開始探索！");
+            } else {
+                closeModal();
+            }
         }
 
-        // 網頁載入完成時初始化
         window.onload = function() {
             initApp();
         };
